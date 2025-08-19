@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+.env
+
+# dbt
+logs/
+insure4all/logs/
+target/
+dbt_packages/
+manifest.json
+partial_parse.msgpack
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+*.swp
+*.swo
+
+# Other
+*.bak
+*.tmp
+
+# Ignore compiled files
+*.so
+*.dll
+*.exe
+
+# Ignore data files
+*.csv
+*.parquet
+*.tsv
+*.xlsx
+*.db
+
+# Ignore secrets
+secrets.env
+
+# Ignore test artifacts
+coverage/
+*.coverage
+
+# Ignore README backups
+README*.bak

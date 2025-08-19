@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: landing_raw
+    description: "Raw landing tables for insurance data."
+    tables:
+      - name: customer
+        description: "Raw customer data."
+      - name: policy
+        description: "Raw policy data."
+      - name: event
+        description: "Raw event data."

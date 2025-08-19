@@ -1,0 +1,107 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: "Customer dimension table. Contains enriched customer profile data including age range and region. Sourced from landing_raw.customer and joined with policy data."
+    columns:
+      - name: customer_id
+        description: "Unique identifier for each customer."
+        tests:
+          - not_null
+          - unique
+      - name: age_range
+        description: "Categorized age group for the customer, derived from age."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Under 18', '18-25', '26-35', '36-50', 'Over 50', 'Unknown']
+      - name: region
+        description: "Geographic region of the customer."
+        tests:
+          - not_null
+      - name: policy_type
+        description: "Type of insurance policy held by the customer."
+      - name: brand
+        description: "Brand of the insurance policy."
+
+  - name: dim_policy_type
+    description: "Policy dimension table. Contains details about insurance policies, including type, brand, coverage, premium, and event dates. Sourced from landing_raw.policy and event data."
+    columns:
+      - name: policy_id
+        description: "Unique identifier for each policy."
+        tests:
+          - not_null
+          - unique
+      - name: coverage_amount
+        description: "Coverage amount for the policy."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+      - name: customer_id
+        description: "Identifier for the customer who owns the policy."
+        tests:
+          - not_null
+      - name: brand
+        description: "Brand of the insurance policy."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['ShieldCo', 'SafeGuard', 'InsureX', 'Unknown']
+      - name: type
+        description: "Type of insurance policy (Auto, Home, Life, Unknown)."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Auto', 'Home', 'Life', 'Unknown']
+      - name: premium_amount
+        description: "Premium amount for the policy."
+      - name: first_event_date
+        description: "Timestamp of the first event for the policy."
+      - name: last_event_date
+        description: "Timestamp of the last event for the policy."
+
+  - name: fact_event
+    description: "Event fact table. Contains transactional events (purchase, renewal, cancel, claim) at the policy level. Sourced from landing_raw.event."
+    columns:
+      - name: policy_id
+        description: "Identifier for the policy associated with the event."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_policy_type')
+                field: policy_id
+      - name: event_type
+        description: "Type of event (purchase, renewal, cancel, claim)."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['purchase', 'renewal', 'cancel', 'claim']
+      - name: event_timestamp
+        description: "Timestamp of the event."
+        tests:
+          - not_null
+
+sources:
+  - name: landing_raw
+    description: "Raw landing tables for insurance data."
+    tables:
+      - name: customer
+        description: "Raw customer data."
+        freshness:
+          warn_after: {count: 24, period: hour}
+          error_after: {count: 48, period: hour}
+        loaded_at_field: loaded_at
+      - name: policy
+        description: "Raw policy data."
+        freshness:
+          warn_after: {count: 24, period: hour}
+          error_after: {count: 48, period: hour}
+        loaded_at_field: loaded_at
+      - name: event
+        description: "Raw event data."
+        freshness:
+          warn_after: {count: 24, period: hour}
+          error_after: {count: 48, period: hour}
+        loaded_at_field: loaded_at

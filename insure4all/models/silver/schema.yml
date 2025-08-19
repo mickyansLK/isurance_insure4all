@@ -1,0 +1,63 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: "Customer dimension enriched from landing_raw.customer."
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+      - name: age_range
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Under 18', '18-25', '26-35', '36-50', 'Over 50', 'Unknown']
+      - name: region
+        tests:
+          - not_null
+
+  - name: dim_policy_type
+    description: "Policy dimension: policy_id, customer_id, type, brand, coverage/premium, first/last event."
+    columns:
+      - name: policy_id
+        tests:
+          - not_null
+          - unique
+      - name: coverage_amount
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+      - name: customer_id
+        tests:
+          - not_null
+      - name: brand
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['ShieldCo', 'SafeGuard', 'InsureX', 'Unknown']
+      - name: type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Auto', 'Home', 'Life', 'Unknown']
+
+  - name: fact_event
+    description: "Event fact (purchase/renewal/cancel/claim) at policy level."
+    columns:
+      - name: policy_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_policy_type')
+                field: policy_id
+      - name: event_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['purchase', 'renewal', 'cancel', 'claim']
+      - name: event_timestamp
+        tests:
+          - not_null
